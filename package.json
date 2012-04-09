@@ -1,0 +1,33 @@
+{
+  "name" : "mws-js",
+  "description" : "Amazon Marketplace Web Services client with support for all api calls.",
+  "keywords" : ["mws", "amazon", "marketplace"],
+  "homepage" : "_",
+  "version" : "0.1.0",
+  "author" : "Eibbor Srenduas <robbies@eibbors.net> (http://eibbors.net)",
+  "contributors" : [
+    // "maqr <maqr.lollerskates@gmail.com> (https://github.com/maqr)",
+    // "Ben Weaver (http://benweaver.com/)",
+    // "Jae Kwon (https://github.com/jaekwon)",
+    // "Jim Robert",
+    // "Ștefan Rusu (http://www.saltwaterc.eu/)",
+    // "Carter Cole <carter.cole@cartercole.com> (http://cartercole.com/)",
+    // "Kurt Raschke <kurt@kurtraschke.com> (http://www.kurtraschke.com/)",
+    // "Contra <contra@australia.edu> (https://github.com/Contra)",
+    // "Marcelo Diniz <marudiniz@gmail.com> (https://github.com/mdiniz)",
+    // "Michael Hart (https://github.com/mhart)",
+    // "Zachary Scott <zachary@zacharyscott.net> (http://zacharyscott.net/)",
+    // "Raoul Millais (https://github.com/raoulmillais)"
+  ],
+  "main" : "./lib/mws",
+  "directories" : {
+    "lib": "./lib"
+  },
+  "repository" : {
+    "type" : "git",
+    "url" : "https://github.com/Leonidas-from-XIV/node-xml2js.git"
+  },
+  "dependencies" : {
+    "xml2js" : ">=0.1.13"
+  }
+}
