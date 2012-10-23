@@ -3,8 +3,8 @@
   "description" : "Amazon Marketplace Web Services client with support for all api calls.",
   "keywords" : ["mws", "amazon", "marketplace"],
   "homepage" : "_",
-  "version" : "0.1.0",
-  "author" : "Eibbor Srenduas <robbies@eibbors.net> (http://eibbors.net)",
+  "version" : "0.1.1",
+  "author" : "Eibbor Srenduas <r@eibbors.com> (http://eibbors,com)",
   "contributors" : [ ],
   "main" : "./lib/mws",
   "directories" : {
