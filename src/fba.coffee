@@ -47,15 +47,47 @@ complex =
         line2: new mws.Param('Line2')
         line3: new mws.Param('Line3')
         city: new mws.Param('City')
+        county: new mws.Param('DistrictOrCounty')
         state: new mws.Param('StateOrProvinceCode')
         zip: new mws.Param('PostalCode')
-        district: new mws.Param('DistrictOrCounty')
         country: new mws.Param('CountryCode')
         phone: new mws.Param('PhoneNumber')
       if init? then @set init
 
+  DestinationAddress: class extends complex.Address
+    constructor: (required, init) ->
+      super 'DestinationAddress', required,  init
+
+  ShipFromAddress: class extends mws.ComplexParam
+    constructor: (@required=false, init) ->
+      @name = 'ShipFromAddress'
+      @params = 
+        name: new mws.Param('Name', true)
+        line1: new mws.Param('AddressLine1', true)
+        line2: new mws.Param('AddressLine2', false)
+        city: new mws.Param('City', true)
+        county: new mws.Param('DistrictOrCounty', false)
+        state: new mws.Param('StateOrProvinceCode', true)
+        zip: new mws.Param('PostalCode', true)
+        country: new mws.Param('CountryCode', true)
+      if init? then @set init
+
+  InboundShipmentHeader: class extends mws.ComplexParam
+    constructor: (@required=false,init) ->
+      @name = 'InboundShipmentHeader'
+      @params =
+        shipmentName: new mws.Param('ShipmentName', true)
+        shipFromAddress: new complex.ShipFromAddress(true)
+        destFCID: new mws.Param('DestinationFulfillmentCenterId', true)
+        shipmentStatus: new mws.Param('ShipmentStatus', false)
+        labelPrepPref: new mws.Param('LabelPrepPreference',false)
+
+  # The following classes pertain to the various Item lists (plural classes)
+  # and their child classes (optional if you use the addItem function)
+
+  # Child parameter of LineItems
   LineItem: class extends mws.ComplexParam
-    constructor: (init) ->
+    constructor: (@required=false, init) ->
       @params = 
         comment: new mws.Param('DisplayableComment')
         giftMessage: new mws.Param('GiftMessage')
@@ -65,16 +97,59 @@ complex =
         itemId: new mws.Param('SellerFulfillmentOrderItemId')
         sku: new mws.Param('SellerSKU')
       if init? then @set init
-
+ 
   LineItems: class extends mws.ComplexList
-
+    constructor: (init) ->
+      super 'Items', 'member'
+    # Constructs (unless you pass a single object) and stores a LineItem instance
     addItem: (itemId, sku, quantity, declaredValue, declaredCurrency, giftMessage, comment) ->
       if arguments.length is 1 and typeof itemId is 'object'
         if itemId.render? then @value.push itemId
-        else @value.push new complex.LineItem
+        else @value.push new complex.LineItem itemId
       else
         @value.push new complex.LineItem {itemId, sku, quantity, declaredValue, declaredCurrency, giftMessage, comment} 
-              
+  
+  # Child parameter of InboundShipmentItems < InboundShipmentHeader
+  InboundShipmentItem: class extends mws.ComplexParam
+    constructor: (init) ->
+      @params = 
+        quantity: new mws.Param('QuantityShipped')
+        sku: new mws.Param('SellerSKU')
+      if init? then @set init
+
+  # Stores a set of InboundShipmentItem instances for request params
+  InboundShipmentItems: class extends mws.ComplexList
+    constructor: (required, init) ->
+      super 'InboundShipmentItems', 'member', required, init
+
+    # Add additional InboundShipmentItem via quantity/sku or existing instance
+    addItem: (quantity, sku) ->
+      if arguments.length is 1 and typeof quantity is 'object'
+        if quantity.render? then @value.push itemId
+        else @value.push new complex.InboundShipmentItem quantity
+      @value.push new complex.InboundShipmentItem { quantity, sku }
+
+  InboundShipmentPlanRequestItem: class extends ComplexParam
+    constructor: (init) ->
+      @params = 
+        quantity: new mws.Param('Quantity')
+        sku: new mws.Param('SellerSKU')
+        asin: new mws.Param('ASIN')
+        condition: new mws.Param('Condition')
+      if init? then @set init
+
+  InboundShipmentPlanRequestItems: class extends mws.ComplexList
+    constructor: (required, init) ->
+      super 'InboundShipmentPlanRequestItems', 'member', required, init
+
+    # Add additional InboundShipmentItem via quantity/sku or existing instance
+    addItem: (quantity, sku, asin, condition) ->
+      if arguments.length is 1 and typeof quantity is 'object'
+        if quantity.render? then @value.push itemId
+        else @value.push new complex.InboundShipmentPlanRequestItem quantity
+      @value.push new complex.InboundShipmentPlanRequestItem { quantity, sku, asin, condition }
+
+
 enums =
   # Not exactly screaming for an enum class, but the only two values
   # # currently allowed as part of the inventory api
@@ -106,6 +181,60 @@ requests =
       constructor: (init) ->
         super MWS_FBA_INBOUND, 'GetServiceStatus', [], {}, null, init
 
+    CreateInboundShipment: class extends mws.Request
+      constructor: (init) ->
+        super MWS_FBA_INBOUND, 'CreateInboundShipment',[             
+          new mws.Param('ShipmentId', true),
+          new complex.InboundShipmentHeader(true),
+          new complex.InboundShipmentItems(true)
+        ], {}, null, init 
+
+    CreateInboundShipmentPlan: class extends mws.Request
+      constructor: (init) ->
+        super MWS_FBA_INBOUND, 'CreateInboundShipmentPlan',[
+          new mws.Param('LabelPrepPreference', true),
+          new mws.Param(new mws.Param),
+          new complex.ShipFromAddress(true),
+          new mws.Param('InboundShipmentPlanRequestItems', true)
+        ], {}, null, init
+
+    ListInboundShipmentItems: class extends mws.Request
+      constructor: (init) ->
+        super MWS_FBA_INBOUND, 'ListInboundShipmentItems',[
+          new mws.Param('ShipmentId', required: true),
+          new mws.Timestamp('LastUpdatedAfter'),
+          new mws.Timestamp('LastUpdatedBefore')
+        ], {}, null, init
+
+    ListInboundShipmentItemsByNextToken: class extends mws.Request
+      constructor: (init) ->
+        super MWS_FBA_INBOUND, 'ListInboundShipmentItemsByNextToken',[
+          new mws.Param('NextToken', true)
+        ], {}, null, init
+
+    ListInboundShipments: class extends mws.Request
+      constructor: (init) ->
+        super MWS_FBA_INBOUND, 'ListInboundShipments',[
+          new mws.ParamList('ShipmentStatusList', 'member') 
+          new mws.ParamList('ShipmentIdList', 'member'),
+          new mws.Timestamp('LastUpdatedAfter'),
+          new mws.Timestamp('LastUpdatedBefore')
+        ], {}, null, init
+
+    ListInboundShipmentsByNextToken: class extends mws.Request
+      constructor: (init) ->
+        super MWS_FBA_INBOUND, 'ListInboundShipmentsByNextToken',[ 
+          new mws.Param('NextToken', true)
+        ], {}, null, init
+
+    UpdateInboundShipment: class extends mws.Request
+      constructor: (init) ->
+        super MWS_FBA_INBOUND, 'UpdateInboundShipment',[
+          new mws.Param('ShipmentId', true)
+          new complex.InboundShipmentHeader(true)
+          new complex.InboundShipmentItems(true)
+        ], {}, null, init
+
   outbound:
     GetServiceStatus: class extends mws.Request
       constructor: (init) ->
@@ -125,7 +254,7 @@ requests =
           new enums.FulfillmentPolicy()
           new mws.Param('FulfillmentMethod')
           new mws.ParamList('NotificationEmailList', 'member')
-          new complex.Address('DestinationAddress')
+          new complex.DestinationAddress()
           new complex.LineItems()
         ], {}, null, init
 
@@ -190,7 +319,7 @@ class FBAOutboundClient extends mws.Client
         cb status, res
 
 class FBAInventoryClient extends mws.Client
-
+ 
     getServiceStatus: (cb) ->
       @invoke new requests.inventory.GetServiceStatus(), {}, (res) =>
         status = res.result?.Status ? null
