@@ -1,7 +1,7 @@
 # ----------------------------------------------------------
 #  mws-js • fba.coffee • by robbie saunders [eibbors.com]
 # ----------------------------------------------------------
-# Description Soon
+# Module containing Amazon's newer Fulfillment service APIs
 # ----------------------------------------------------------
 
 mws = require './core'
@@ -39,22 +39,22 @@ complex =
         comment: new mws.Param('DisplayableOrderComment', false) 
       if init? then @set init
 
-  Address: class extends mws.ComplexParam
+  Address: class Address_Base extends mws.ComplexParam
     constructor: (@name='Address', @required=false, init) ->
       @params = 
-        name: new mws.Param('Name')
-        line1: new mws.Param('Line1')
-        line2: new mws.Param('Line2')
-        line3: new mws.Param('Line3')
-        city: new mws.Param('City')
-        county: new mws.Param('DistrictOrCounty')
-        state: new mws.Param('StateOrProvinceCode')
-        zip: new mws.Param('PostalCode')
-        country: new mws.Param('CountryCode')
-        phone: new mws.Param('PhoneNumber')
+        name: new mws.Param('Name', true)
+        line1: new mws.Param('Line1', true)
+        line2: new mws.Param('Line2', false)
+        line3: new mws.Param('Line3', false)
+        city: new mws.Param('City', true)
+        county: new mws.Param('DistrictOrCounty', false)
+        state: new mws.Param('StateOrProvinceCode', true)
+        zip: new mws.Param('PostalCode', true)
+        country: new mws.Param('CountryCode', true)
+        phone: new mws.Param('PhoneNumber', false)
       if init? then @set init
 
-  DestinationAddress: class extends complex.Address
+  DestinationAddress: class extends Address_Base
     constructor: (required, init) ->
       super 'DestinationAddress', required,  init
 
@@ -129,7 +129,7 @@ complex =
         else @value.push new complex.InboundShipmentItem quantity
       @value.push new complex.InboundShipmentItem { quantity, sku }
 
-  InboundShipmentPlanRequestItem: class extends ComplexParam
+  InboundShipmentPlanRequestItem: class extends mws.ComplexParam
     constructor: (init) ->
       @params = 
         quantity: new mws.Param('Quantity')

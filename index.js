@@ -9,7 +9,7 @@ mws.products = require('./lib/products');
 mws.reports = require('./lib/reports');
 mws.sellers = require('./lib/sellers');
 
-var util = require('util');
-console.log(util.inspect(mws));
+module.exports = mws
 
-// console.log(util.inspect(mws.orders.requests));
+// var util = require('util');
+// console.log(util.inspect(mws));

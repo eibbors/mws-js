@@ -17,17 +17,37 @@ xml2js = require 'xml2js'
 MWS_SIGNATURE_METHOD = 'HmacSHA256'
 MWS_SIGNATURE_VERSION = 2
 
+# Constant marketplaceIds are annoying to keep track of so I put them here
+MWS_MARKETPLACES = 
+  # allow translation to country code 
+  ATVPDKIKX0DER: 'US'
+  A1F83G8C2ARO7P: 'UK'
+  A13V1IB3VIYZZH: 'FR'
+  A1PA6795UKMFR9: 'DE'
+  APJ6JRA9NG5V4: 'IT'
+  A1RKKUPIHCS9HS: 'ES'
+  # allow lookup by country code
+  US: 'ATVPDKIKX0DER'
+  UK: 'A1F83G8C2ARO7P'
+  FR: 'A13V1IB3VIYZZH'
+  DE: 'A1PA6795UKMFR9'
+  IT: 'APJ6JRA9NG5V4'
+  ES: 'A1RKKUPIHCS9HS'
+  CA: null
+  CN: null
+  JP: null
+
 # I'm piecing these together from various sources, if you can help, please let me know!
 MWS_LOCALES =
-  US: { host: "mws.amazonservices.com", country: 'UnitedStates', domain: 'www.amazon.com', marketplaceId: 'ATVPDKIKX0DER' }
-  UK: { host: "mws.amazonservices.co", country: 'UnitedKingdom', domain: 'www.amazon.co.uk', marketplaceId: 'A1F83G8C2ARO7P' }
-  FR: { host: "mws.amazonservices.fr", country: 'France',        domain: 'www.amazon.fr', marketplaceId: 'A13V1IB3VIYZZH' }
-  DE: { host: "mws.amazonservices.de", country: 'Germany',       domain: 'www.amazon.de', marketplaceId: 'A1PA6795UKMFR9' }
-  IT: { host: "mws.amazonservices.it", country: 'Italy',         domain: 'www.amazon.it', marketplaceId: 'APJ6JRA9NG5V4' }
-  ES: { host: "mws.amazonservices.es", country: 'Spain',         domain: 'www.amazon.es', marketplaceId: 'A1RKKUPIHCS9HS' }
-  CA: { host: "mws.amazonservices.ca", country: 'Canada',  domain: 'www.amazon.ca' }
-  CN: { host: "mws.amazonservices.cn", country: 'Canada',  domain: 'www.amazon.cn' }
-  JP: { host: "mws.amazonservices.jp", country: 'Canada', domain: 'www.amazon.jp' }
+  US: { host: "mws.amazonservices.com", country: 'UnitedStates',  domain: 'www.amazon.com',   marketplaceId: MWS_MARKETPLACES.US }
+  UK: { host: "mws.amazonservices.co",  country: 'UnitedKingdom', domain: 'www.amazon.co.uk', marketplaceId: MWS_MARKETPLACES.UK }
+  FR: { host: "mws.amazonservices.fr",  country: 'France',        domain: 'www.amazon.fr',    marketplaceId: MWS_MARKETPLACES.FR }
+  DE: { host: "mws.amazonservices.de",  country: 'Germany',       domain: 'www.amazon.de',    marketplaceId: MWS_MARKETPLACES.DE }
+  IT: { host: "mws.amazonservices.it",  country: 'Italy',         domain: 'www.amazon.it',    marketplaceId: MWS_MARKETPLACES.IT }
+  ES: { host: "mws.amazonservices.es",  country: 'Spain',         domain: 'www.amazon.es',    marketplaceId: MWS_MARKETPLACES.ES }
+  CA: { host: "mws.amazonservices.ca",  country: 'Canada',        domain: 'www.amazon.ca',    marketplaceId: MWS_MARKETPLACES.CA }
+  CN: { host: "mws.amazonservices.cn",  country: 'China',         domain: 'www.amazon.cn',    marketplaceId: MWS_MARKETPLACES.CN }
+  JP: { host: "mws.amazonservices.jp",  country: 'Japan',         domain: 'www.amazon.jp',    marketplaceId: MWS_MARKETPLACES.JP }
     
 # Core and common type definitions -- likely to be moved to a seperate file after
 # the Feeds generation module is working, as there's a buttload of them
@@ -46,6 +66,8 @@ class MWSClient extends EventEmitter
       (options[k] = v) for k,v of e 
     # Load the settings if they pass in one of the MWS_LOCALES or their own
     if options.locale?
+      unless typeof options.locale is 'object'
+        options.locale = MWS_LOCALES[options.locale] ? null
       @host = options.host ? options.locale.host ? "mws.amazonservices.com"
       @marketplaceId = options.locale.marketplaceId
       @country = options.locale.country ? undefined
@@ -58,7 +80,7 @@ class MWSClient extends EventEmitter
     @accessKeyId = options.accessKeyId ? null
     @secretAccessKey = options.secretAccessKey ? null
     # MarketplaceId required by many requests
-    @marketplaceId = options.marketplaceId ? null
+    @marketplaceId ?= options.marketplaceId ? null
     # Application information
     @appName = options.appName or 'mws-js'
     @appVersion = options.appVersion or "0.2.0"
@@ -92,6 +114,9 @@ class MWSClient extends EventEmitter
     q
 
   invoke: (request, options, cb) ->
+    # Calculate MD5 / Attach options.body as appropriate
+    if request?.body then request.md5Calc()
+    if options?.body then request.attach options.body, 'text'
     # Load request path + sign query
     options.path ?= request.service?.path ? '/'
     q = @sign(options.service ? request.service ? null, request.query(options.query ? {}))
@@ -179,9 +204,12 @@ class MWSRequest
         throw "#{param} is not a valid parameter for this request type"
 
   attach: (body, format) ->
-    @headers['content-type'] = format
-    @headers['content-md5'] = crypto.createHash('md5').update(body).digest("base64")
     @body = body
+    @headers['content-type'] = format ? 'text'
+    md5Calc()
+
+  md5Calc: ->
+    @headers['content-md5'] = crypto.createHash('md5').update(@body).digest("base64")
 
 class MWSResponse
 
@@ -436,7 +464,8 @@ class MWSComplexList extends MWSParamList
 # Export all of the juicy goodness!
 module.exports = 
   # namespaced constants and definitions
-  locales: MWS_LOCALES
+  MARKETPLACES: MWS_MARKETPLACES
+  LOCALES: MWS_LOCALES
   types: types
   # core classes used by submodules
   Client: MWSClient
