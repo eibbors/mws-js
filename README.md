@@ -34,3 +34,9 @@ client.invoke(listOrders, function(result) {
   // Do something fun with the results...
 });
 ```
+
+It's worth noting that as it is, this code will not work.  This is because the mws object has no "orders" object.  Orders is an included module, representing one of Amazon's APIs.  Other included modules include: products, reports, sellers, and feeds.  You should include the modules you require in the mws-js/lib/mws.js file.  For example, to make the above code work, you would include the "orders.js" module as "orders":
+
+```
+exports.orders = require('./orders');
+```
