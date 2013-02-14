@@ -68,19 +68,19 @@ class MWSClient extends EventEmitter
     if options.locale?
       unless typeof options.locale is 'object'
         options.locale = MWS_LOCALES[options.locale] ? null
-      @host = options.host ? options.locale.host ? "mws.amazonservices.com"
+      @host = options.host ? (options.locale.host ? "mws.amazonservices.com")
       @marketplaceId = options.locale.marketplaceId
       @country = options.locale.country ? undefined
       @domain = options.locale.domain ? undefined
     # Connection settings
-    @host = options.host ? "mws.amazonservices.com"
+    @host = @host ? (options.host ? "mws.amazonservices.com")
     @port = options.port ? 443
     # Credentials required by every request
     @merchantId = options.merchantId ? null
     @accessKeyId = options.accessKeyId ? null
     @secretAccessKey = options.secretAccessKey ? null
     # MarketplaceId required by many requests
-    @marketplaceId ?= options.marketplaceId ? null
+    @marketplaceId ?= @marketplaceId ? (options.marketplaceId ? null)
     # Application information
     @appName = options.appName or 'mws-js'
     @appVersion = options.appVersion or "0.2.0"
