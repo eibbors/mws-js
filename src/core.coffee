@@ -154,7 +154,7 @@ class MWSClient extends EventEmitter
           if options.nextTokenCall? and mwsres.result?.NextToken?
             mwsres.nextToken = mwsres.result.NextToken
             nextRequest = new options.nextTokenCall(NextToken: mwsres.nextToken)
-            mwsres.getNext = (callback) => @invoke nextRequest, {}, callback
+            mwsres.getNext = () => @invoke nextRequest, { nextTokenCall : options.nextTokenCall }, cb
           @emit 'response', mwsres, parsed
           cb mwsres
       res.on 'error', (err) =>
