@@ -144,10 +144,11 @@ class MWSClient extends EventEmitter
     # Instantiate an http(s) request
     req = https.request options, (res) =>
       # Join chunked data until EOF reached, then parse or pass error
-      data = ''
+      data = []
       res.on 'data', (chunk) =>
-        data += chunk.toString()
+        data.push( chunk )
       res.on 'end', =>
+        data = Buffer.concat(data)
         mwsres = new MWSResponse res, data, options
         mwsres.parseHeaders()
         mwsres.parseBody (err, parsed) =>
@@ -165,7 +166,7 @@ class MWSClient extends EventEmitter
           cb mwsres
       res.on 'error', (err) =>
         @emit 'error', err
-        cb err, null, data
+        cb err, null, Buffer.concat(data).toString()
     @emit 'request', req, options
     req.write options.body
     req.end()
@@ -243,8 +244,13 @@ class MWSResponse
 
   # Handle xml2js conversion as well as any report formats later on
   parseBody: (cb) ->
-    isXml = @headers['content-type'] is 'text/xml'
-    isXml = isXml || (@headers['content-type'] is 'text/plain' and @body.indexOf('<?xml') == 0)
+    isXml = false
+    if @headers['content-type'] is 'text/xml'
+      @body = @body.toString()
+      isXml = true
+    if @headers['content-type'] is 'text/plain'
+      @body = @body.toString()
+      isXml = @body.indexOf('<?xml') == 0
     if isXml
       parser = new xml2js.Parser { explicitRoot: true, normalize: false, trim: false }
       parser.parseString @body, (err, res) =>
@@ -265,8 +271,7 @@ class MWSResponse
               if v.ResponseMetadata? then @meta.response = v.ResponseMetadata
           cb err, res 
     else if @headers['content-type'] in @allowedContentTypes
-      body = new Buffer(@body)
-      md5 = crypto.createHash('md5').update(body).digest("base64")
+      md5 = crypto.createHash('md5').update(@body).digest("base64")
       if @headers['content-md5'] == md5
         @response = @body
         cb null, @body
