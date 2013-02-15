@@ -243,11 +243,13 @@ class MWSResponse
 
   # Handle xml2js conversion as well as any report formats later on
   parseBody: (cb) ->
-    if @headers['content-type'] is 'text/xml'
+    isXml = @headers['content-type'] is 'text/xml'
+    isXml = isXml || (@headers['content-type'] is 'text/plain' and @body.indexOf('<?xml') == 0)
+    if isXml
       parser = new xml2js.Parser { explicitRoot: true, normalize: false, trim: false }
       parser.parseString @body, (err, res) =>
         if err then throw err
-        else  
+        else
           @response = res ? {}
           # This simply checks the root elements for "#{x}Response" and sets responseType
           for k, v of @response
