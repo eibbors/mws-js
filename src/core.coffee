@@ -339,7 +339,6 @@ class MWSParamList extends MWSParam
 
 class MWSEnum extends MWSParam 
   constructor: (@name, @members=[], @required=false, value) ->
-    @members = []
     @value = null
     if value? then @set value 
 
