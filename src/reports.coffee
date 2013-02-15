@@ -4,269 +4,382 @@
 # Description Soon
 # ----------------------------------------------------------
 
-mws = require("./core")
+mws = require "./core"
 
 MWS_REPORTS = new mws.Service
-    name: "Reports"
-    group: "Reports & Report Scheduling"
-    path: "/"
-    version: "2009-01-01"
-    legacy: true
+  name: "Reports"
+  group: "Reports & Report Scheduling"
+  path: "/"
+  version: "2009-01-01"
+  legacy: true
+
+# Report types
+reportTypes =
+  # Listing Reports
+  '_GET_FLAT_FILE_OPEN_LISTINGS_DATA_':
+    title: 'Inventory Report'
+    group: 'Listings'
+    format: 'flat'
+    request: true
+  '_GET_MERCHANT_LISTINGS_DATA_BACK_COMPAT_':
+    title: 'Open Listings Report'
+    group: 'Listings'
+    format: 'flat'
+    request: true
+  '_GET_MERCHANT_LISTINGS_DATA_':
+    title: 'Merchant Listings Report'
+    group: 'Listings'
+    format: 'flat'
+    request: true
+  '_GET_MERCHANT_LISTINGS_DATA_LITE_':
+    title: 'Merchant Listings Report - Lite'
+    group: 'Listings'
+    format: 'flat'
+    request: true
+  '_GET_MERCHANT_LISTINGS_DATA_LITER_':
+    title: 'Merchant Listings Report - Liter'
+    group: 'Listings'
+    format: 'flat'
+    request: true
+  '_GET_CONVERGED_FLAT_FILE_SOLD_LISTINGS_DATA':
+    title: 'Sold Listings Report'
+    group: 'Listings'
+    format: 'flat'
+    request: true
+  '_GET_MERCHANT_CANCELLED_LISTINGS_DATA_':
+    title: 'Canceled Listings Report'
+    group: 'Listings'
+    format: 'flat'
+    request: true
+  '_GET_MERCHANT_LISTINGS_DEFECT_DATA_':
+    title: 'Quality Listing Report'
+    group: 'Listings'
+    format: 'flat'
+    request: true
+  # General Order Reports
+  '_GET_FLAT_FILE_ACTIONABLE_ORDER_DATA_':
+    title: 'Unshipped Orders Report'
+    group: 'Orders'
+    format: 'flat'
+    request: true
+  '_GET_ORDERS_DATA_':
+    title: 'Scheduled XML Order Report'
+    group: 'Orders'
+    format: 'xml'
+    schedule: true
+  '_GET_FLAT_FILE_ORDER_REPORT_DATA_':
+    title: 'Flat File Order Report'
+    group: 'Orders'
+    format: 'flat'
+    request: true
+  '_GET_FLAT_FILE_ORDERS_DATA_':
+    title: 'Requested or Scheduled Flat File Order Report'
+    group: 'Orders'
+    format: 'flat'
+    schedule: true
+    request: true
+  '_GET_CONVERGED_FLAT_FILE_ORDER_REPORT_DATA_':
+    title: 'Flat File Order Report'
+    group: 'Orders'
+    format: 'flat'
+    schedule: true
+    request: true
+  # Order Tracking Reports
+  '_GET_FLAT_FILE_ALL_ORDERS_DATA_BY_LAST_UPDATE_':
+    title: 'Flat File Orders By Last Update Report'
+    group: 'Orders'
+    format: 'flat'
+    request: true
+  '_GET_FLAT_FILE_ALL_ORDERS_DATA_BY_ORDER_DATE_':
+    title: 'Flat File Orders By Order Date'
+    group: 'Orders'
+    format: 'flat'
+    request: true
+  '_GET_XML_ALL_ORDERS_DATA_BY_LAST_UPDATE_':
+    title: 'XML Orders By Last Update Report'
+    group: 'Orders'
+    format: 'xml'
+    request: true
+  '_GET_XML_ALL_ORDERS_DATA_BY_ORDER_DATE_':
+    title: 'XML Orders By Order Date'
+    group: 'Orders'
+    format: 'xml'
+    request: true
+  # Pending Order Reports
+  '_GET_FLAT_FILE_PENDING_ORDERS_DATA_':
+    title: 'Flat File Pending Orders Report'
+    group: 'Orders'
+    format: 'flat'
+    schedule: true
+    request: true
+  '_GET_PENDING_ORDERS_DATA_':
+    title: 'XML Pending Orders Report'
+    format: 'xml'
+    schedule: true
+    request: true
+  '_GET_CONVERGED_FLAT_FILE_PENDING_ORDERS_DATA_':
+    title: 'Converged Flat File Pending Orders Report'
+    group: 'Orders'
+    format: 'flat'
+    schedule: true
+    request: true
+  # Performance reports
+  '_GET_SELLER_FEEDBACK_DATA_':
+    title: 'Flat File Feedback'
+    group: 'Performance'
+    format: 'flat'
+    request: true
 
 ###
 Ojects to represent enum collections used by some request(s)
 @type {Object}
 ###
-enums = exports.enums =
-  Schedules: ->
-    new mws.Enum(["_15_MINUTES_", "_30_MINUTES_", "_1_HOUR_", "_2_HOURS_", "_4_HOURS_", "_8_HOURS_", "_12_HOURS_", "_72_HOURS_", "_1_DAY_", "_2_DAYS_", "_7_DAYS_", "_14_DAYS_", "_15_DAYS_", "_30_DAYS_", "_NEVER_"])
+enums =
+  Schedule: class extends mws.Enum
+    constructor: ->
+      super("Schedule", ["_15_MINUTES_", "_30_MINUTES_", "_1_HOUR_", "_2_HOURS_", "_4_HOURS_", "_8_HOURS_", "_12_HOURS_", "_72_HOURS_", "_1_DAY_", "_2_DAYS_", "_7_DAYS_", "_14_DAYS_", "_15_DAYS_", "_30_DAYS_", "_NEVER_"], true)
 
-  ReportProcessingStatuses: ->
-    new mws.Enum(["_SUBMITTED_", "_IN_PROGRESS_", "_CANCELLED_", "_DONE_", "_DONE_NO_DATA_"])
+  ReportProcessingStatusList: class extends mws.EnumList
+    constructor: ->
+      super("ReportTypeList","Status",["_SUBMITTED_", "_IN_PROGRESS_", "_CANCELLED_", "_DONE_", "_DONE_NO_DATA_"], false)
 
-  ReportOptions: ->
-    new mws.Enum(["ShowSalesChannel=true"])
+  ReportOptions: class extends mws.Enum
+    constructor: ->
+      super("ReportOptions", ["ShowSalesChannel=true", "ShowSalesChannel=false"], false)
 
-  ReportTypes: ->
+  RequestableReportType: class extends mws.Enum
+    constructor: ->
+      reqReportsTypes = ( k for k,v of reportTypes when v.request )
+      super("ReportType", reqReportsTypes, true)
 
-types = exports.types = ReportTypes: {}
+  SchedulableReportType: class extends mws.Enum
+    constructor: ->
+      schedReportsTypes = ( k for k,v of reportTypes when v.schedule )
+      super("ReportType", schedReportsTypes, true)
 
-# // Listing Reports
-# '_GET_FLAT_FILE_OPEN_LISTINGS_DATA_': {title: 'Inventory Report', group: 'Listings', format: 'flat', request: true},
-# '_GET_MERCHANT_LISTINGS_DATA_BACK_COMPAT_': {title: 'Open Listings Report', group: 'Listings', format: 'flat', request: true},
-# '_GET_MERCHANT_LISTINGS_DATA_': {title: 'Merchant Listings Report', group: 'Listings', format: 'flat', request: true},
-# '_GET_MERCHANT_LISTINGS_DATA_LITE_': {title: 'Merchant Listings Report - Lite', group: 'Listings', format 'flat', request: true},
-# '_GET_MERCHANT_LISTINGS_DATA_LITER_': {title: 'Merchant Listings Report - Liter', group: 'Listings', format 'flat', request: true},
-# '_GET_MERCHANT_CANCELLED_LISTINGS_DATA_': {title: 'Canceled Listings Report', group: 'Listings', format: 'flat', request: true},
-# '_GET_MERCHANT_LISTINGS_DEFECT_DATA_': {title: 'Quality Listing Report', group: 'Listings', format: 'flat', request: true}
-# // General Order Reports
-# '_GET_FLAT_FILE_ACTIONABLE_ORDER_DATA_': {title: 'Unshipped Orders Report', group: 'Orders', format: 'flat', request: true},
-# '_GET_ORDERS_DATA_': {title: 'Scheduled XML Order Report', group: 'Orders', format: 'xml', schedule: true},
-# '_GET_FLAT_FILE_ORDER_REPORT_DATA_': {title: 'Flat File Order Report', group: 'Orders', format: 'flat', request: true},
-# '_GET_FLAT_FILE_ORDERS_DATA_': {title: 'Requested or Scheduled Flat File Order Report', group: 'Orders', format: 'flat', schedule: true, request: true},
-# '_GET_CONVERGED_FLAT_FILE_ORDER_REPORT_DATA_': {title: 'Flat File Order Report', group: 'Orders', format: 'flat', schedule: true, request: true},
-# // Order Tracking Reports
-# '_GET_FLAT_FILE_ALL_ORDERS_DATA_BY_LAST_UPDATE_': {title: 'Flat File Orders By Last Update Report', group: 'Orders', format: 'flat', request: true}
-# '_GET_FLAT_FILE_ALL_ORDERS_DATA_BY_ORDER_DATE_': { title: 'Flat File Orders By Order Date', group: 'Orders', format: 'flat', request: true } 
-# '_GET_XML_ALL_ORDERS_DATA_BY_LAST_UPDATE_': {title: 'XML Orders By Last Update Report', group: 'Orders', format: 'xml', request: true}
-# '_GET_XML_ALL_ORDERS_DATA_BY_ORDER_DATE_': { title: 'XML Orders By Order Date', group: 'Orders', format: 'xml', request: true } 
-# // Pending Order Reports
-# '_GET_FLAT_FILE_PENDING_ORDERS_DATA_': {title: 'Flat File Pending Orders Report', group: 'Orders', format: 'flat', schedule: true, request: true },
-# '_GET_PENDING_ORDERS_DATA_': {title: 'XML Pending Orders Report', format: 'xml', schedule: true, request: true },
-# '_GET_CONVERGED_FLAT_FILE_PENDING_ORDERS_DATA_': {title: 'Converged Flat File Pending Orders Report', group: 'Orders', format: 'flat', schedule: true, request: true},
+  ReportTypeList: class extends mws.EnumList
+    constructor: ->
+      reportTypesList = ( k for k,v of reportTypes when v.schedule )
+      super("ReportTypeList", "Type", reportTypesList, false)
 
 ###
 A collection of currently supported request constructors. Once created and
 configured, the returned requests can be passed to an mws client `invoke` call
 @type {Object}
 ###
-calls = exports.requests =
-  GetReport: ->
-    new ReportsRequest("GetReport",
-      ReportId:
-        name: "ReportId"
-        required: true
-    )
+requests =
+  RequestReport: class extends mws.Request
+    constructor: (init) ->
+      super MWS_REPORTS , 'RequestReport', [
+        new enums.RequestableReportType(),
+        new mws.Timestamp('StartDate'),
+        new mws.Timestamp('EndDate'),
+        new enums.ReportOptions(),
+        new mws.ParamList('MarketplaceIdList', 'Id'),
+      ], {}, null, init
 
-  GetReportCount: ->
-    new ReportsRequest("GetReportCount",
-      ReportTypes:
-        name: "ReportTypeList.Type"
-        list: true
+  GetReportRequestList: class extends mws.Request
+    constructor: (init) ->
+      super MWS_REPORTS , 'GetReportRequestList', [
+        new mws.ParamList('ReportRequestIdList', 'Id'),
+        new enums.ReportTypeList(),
+        new enums.ReportProcessingStatusList(),
+        new mws.Param('MaxCount'),
+        new mws.Timestamp('RequestedFromDate')
+        new mws.Timestamp('RequestedToDate')
+      ], {}, null, init
 
-      Acknowledged:
-        name: "Acknowledged"
-        type: "Boolean"
+  GetReportRequestListByNextToken: class extends mws.Request
+    constructor: (init) ->
+      super MWS_REPORTS , 'GetReportRequestListByNextToken', [
+        new mws.Param('NextToken', true),
+      ], {}, null, init
 
-      AvailableFrom:
-        name: "AvailableFromDate"
-        type: "Timestamp"
+  GetReportRequestCount: class extends mws.Request
+    constructor: (init) ->
+      super MWS_REPORTS , 'GetReportRequestCount', [
+        new enums.ReportTypeList(),
+        new enums.ReportProcessingStatusList(),
+        new mws.Timestamp('RequestedFromDate')
+        new mws.Timestamp('RequestedToDate')
+      ], {}, null, init
 
-      AvailableTo:
-        name: "AvailableToDate"
-        type: "Timestamp"
-    )
+  CancelReportRequests: class extends mws.Request
+    constructor: (init) ->
+      super MWS_REPORTS , 'CancelReportRequests', [
+        new mws.ParamList('ReportRequestIdList', 'Id'),
+        new enums.ReportTypeList(),
+        new enums.ReportProcessingStatusList(),
+        new mws.Timestamp('RequestedFromDate')
+        new mws.Timestamp('RequestedToDate')
+      ], {}, null, init
 
-  GetReportList: ->
-    new ReportsRequest("GetReportList",
-      MaxCount:
-        name: "MaxCount"
+  GetReportList: class extends mws.Request
+    constructor: (init) ->
+      super MWS_REPORTS , 'GetReportList', [
+        new mws.Param('MaxCount'),
+        new enums.ReportTypeList(),
+        new mws.Bool('Acknowledged'),
+        new mws.Timestamp('AvailableFromDate')
+        new mws.Timestamp('AvailableToDate')
+        new mws.ParamList('ReportRequestIdList', 'Id'),
+      ], {}, null, init
 
-      ReportTypes:
-        name: "ReportTypeList.Type"
-        list: true
+  GetReportListByNextToken: class extends mws.Request
+    constructor: (init) ->
+      super MWS_REPORTS , 'GetReportListByNextToken', [
+        new mws.Param('NextToken', true),
+      ], {}, null, init
 
-      Acknowledged:
-        name: "Acknowledged"
-        type: "Boolean"
+  GetReportCount: class extends mws.Request
+    constructor: (init) ->
+      super MWS_REPORTS , 'GetReportCount', [
+        new enums.ReportTypeList(),
+        new mws.Bool('Acknowledged'),
+        new mws.Timestamp('AvailableFromDate')
+        new mws.Timestamp('AvailableToDate')
+      ], {}, null, init
 
-      AvailableFrom:
-        name: "AvailableFromDate"
-        type: "Timestamp"
+  GetReport: class extends mws.Request
+    constructor: (init) ->
+      super MWS_REPORTS , 'GetReport', [
+        new mws.Param('ReportId', true)
+      ], {}, null, init
 
-      AvailableTo:
-        name: "AvailableToDate"
-        type: "Timestamp"
+  ManageReportSchedule: class extends mws.Request
+    constructor: (init) ->
+      super MWS_REPORTS , 'ManageReportSchedule', [
+        new enums.SchedulableReportType(),
+        new enums.Schedule(),
+        new mws.Timestamp('ScheduledDate')
+      ], {}, null, init
 
-      ReportRequestIds:
-        name: "ReportRequestIdList.Id"
-        list: true
-    )
+  GetReportScheduleList: class extends mws.Request
+    constructor: (init) ->
+      super MWS_REPORTS , 'GetReportScheduleList', [
+        new enums.ReportTypeList(),
+      ], {}, null, init
 
-  GetReportListByNextToken: ->
-    new ReportsRequest("GetReportListByNextToken",
-      NextToken:
-        name: "NextToken"
-        required: true
-    )
+  GetReportScheduleListByNextToken: class extends mws.Request
+    constructor: (init) ->
+      super MWS_REPORTS , 'GetReportScheduleListByNextToken', [
+        new mws.Param('NextToken', true),
+      ], {}, null, init
 
-  GetReportRequestCount: ->
-    new ReportsRequest("GetReportRequestCount",
-      RequestedFrom:
-        name: "RequestedFromDate"
-        type: "Timestamp"
+  GetReportScheduleCount: class extends mws.Request
+    constructor: (init) ->
+      super MWS_REPORTS , 'GetReportScheduleCount', [
+        new enums.ReportTypeList(),
+      ], {}, null, init
 
-      RequestedTo:
-        name: "RequestedToDate"
-        type: "Timestamp"
+  UpdateReportAcknowledgements: class extends mws.Request
+    constructor: (init) ->
+      super MWS_REPORTS , 'UpdateReportAcknowledgements', [
+        new mws.ParamList('ReportIdList', 'Id', true),
+        new mws.Bool('Acknowledged'),
+      ], {}, null, init
 
-      ReportTypes:
-        name: "ReportTypeList.Type"
-        list: true
+# New client class providing more convenient access to service via camelCased
+# versions of the request as methods.
+class ReportsClient extends mws.Client
+  # callback gets (reportReqInfo, res)
+  requestReport: (options, cb)->
+    req = new requests.RequestReport options
+    @invoke  req, {}, (res) =>
+      reportReqInfo = res.result?.ReportRequestInfo ? null
+      cb reportReqInfo , res
 
-      ReportProcessingStatuses:
-        name: "ReportProcessingStatusList.Status"
-        list: true
-        type: enums.ReportProcessingStatuses
-    )
+  # callback gets (reportReqInfoList, res)
+  getReportRequestList: (options, cb)->
+    req = new requests.GetReportRequestList options
+    @invoke  req, { nextTokenCall: requests.GetReportRequestListByNextToken, nextTokenCallUseHasNext: true }, (res) =>
+      reportReqInfoList = res.result?.ReportRequestInfo ? null
+      cb reportReqInfoList, res
 
-  GetReportRequestList: ->
-    new ReportsRequest("GetReportRequestList",
-      MaxCount:
-        name: "MaxCount"
+  # callback gets (reportReqInfoList, res)
+  getReportRequestListByNextToken: (token, cb)->
+    req = new requests.GetReportRequestListByNextToken {NextToken: token}
+    @invoke  req, { nextTokenCall: requests.GetReportRequestListByNextToken, nextTokenCallUseHasNext: true }, (res) =>
+      reportReqInfoList = res.result?.ReportRequestInfo ? null
+      cb reportReqInfoList, res
 
-      RequestedFrom:
-        name: "RequestedFromDate"
-        type: "Timestamp"
+  # Callback function should be (count, res) ->
+  getReportRequestCount: (options, cb)->
+    req = new requests.GetReportRequestCount options
+    @invoke  req, {}, (res) =>
+      count = res.result?.Count ? null
+      cb count, res
 
-      RequestedTo:
-        name: "RequestedToDate"
-        type: "Timestamp"
+  # callback gets (canceledReportReqInfoList, res)
+  cancelReportRequests: (options, cb)->
+    req = new requests.CancelReportRequests options
+    @invoke  req, {}, (res) =>
+      canceledReportReqInfoList = res.result?.ReportRequestInfo ? null
+      cb canceledReportReqInfoList, res
 
-      ReportRequestIds:
-        name: "ReportRequestIdList.Id"
-        list: true
+  # callback gets (reportInfo, res)
+  getReportList: (options, cb)->
+    req = new requests.GetReportList options
+    @invoke  req, { nextTokenCall: requests.GetReportListByNextToken, nextTokenCallUseHasNext: true }, (res) =>
+      reportInfo = res.result?.ReportInfo ? null
+      cb reportInfo, res
 
-      ReportTypes:
-        name: "ReportTypeList.Type"
-        list: true
+  getReportListByNextToken: (token, cb)->
+    req = new requests.GetReportListByNextToken {NextToken: token}
+    @invoke  req, { nextTokenCall: requests.GetReportListByNextToken, nextTokenCallUseHasNext: true }, (res) =>
+      reportInfo = res.result?.ReportInfo ? null
+      cb reportInfo, res
 
-      ReportProcessingStatuses:
-        name: "ReportProcessingStatusList.Status"
-        list: true
-        type: "reports.ReportProcessingStatuses"
-    )
+  # Callback function should be (count, res) ->
+  getReportCount: (options, cb)->
+    req = new requests.GetReportCount options
+    @invoke  req, {}, (res) =>
+      count = res.result?.Count ? null
+      cb count, res
 
-  GetReportRequestListByNextToken: ->
-    new ReportsRequest("GetReportRequestListByNextToken",
-      NextToken:
-        name: "NextToken"
-        required: true
-    )
+  # Callback function should be (report, res) ->
+  getReport: (options, cb)->
+    req = new requests.GetReport options
+    @invoke  req, { allowedContentTypes: [ 'application/octet-stream' ] }, (res) =>
+      report = res.response
+      cb report, res
 
-  CancelReportRequests: ->
-    new ReportsRequest("CancelReportRequests",
-      RequestedFrom:
-        name: "RequestedFromDate"
-        type: "Timestamp"
+  # Callback function should be (reportSchedules, res) ->
+  manageReportSchedule: (options, cb)->
+    req = new requests.ManageReportSchedule options
+    @invoke  req, {}, (res) =>
+      reportSchedules = res.result?.ReportSchedule ? null
+      cb reportSchedules , res
 
-      RequestedTo:
-        name: "RequestedToDate"
-        type: "Timestamp"
+  # Callback function should be (reportSchedule, res) ->
+  getReportScheduleList: (options, cb)->
+    req = new requests.GetReportScheduleList options
+    @invoke  req, { nextTokenCall: requests.GetReportScheduleListByNextToken }, (res) =>
+      reportSchedule = res.result?.ReportSchedule ? null
+      cb reportSchedule, res
 
-      ReportRequestIds:
-        name: "ReportRequestIdList.Id"
-        list: true
+  getReportScheduleListByNextToken: (token, cb)->
+    req = new requests.GetReportScheduleListByNextToken {NextToken: token}
+    @invoke  req, { nextTokenCall: requests.GetReportScheduleListByNextToken }, (res) =>
+      reportSchedule = res.result?.ReportSchedule ? null
+      cb reportSchedule, res
 
-      ReportTypes:
-        name: "ReportTypeList.Type"
-        list: true
+  # Callback function should be (count, res) ->
+  getReportScheduleCount: (options, cb)->
+    req = new requests.GetReportScheduleCount options
+    @invoke  req, {}, (res) =>
+      count = res.result?.Count ? null
+      cb count, res
 
-      ReportProcessingStatuses:
-        name: "ReportProcessingStatusList.Status"
-        list: true
-        type: "reports.ReportProcessingStatuses"
-    )
+  # Callback function should be (reportInfo, res) ->
+  updateReportAcknowledgements: (options, cb)->
+    req = new requests.UpdateReportAcknowledgements options
+    @invoke  req, {}, (res) =>
+      reportInfo = res.result?.ReportInfo ? null
+      cb reportInfo , res
 
-  RequestReport: ->
-    new ReportsRequest("RequestReport",
-      ReportType:
-        name: "ReportType"
-        required: true
-
-      MarketplaceIds:
-        name: "MarketplaceIdList.Id"
-        list: true
-        required: false
-
-      StartDate:
-        name: "StartDate"
-        type: "Timestamp"
-
-      EndDate:
-        name: "EndDate"
-        type: "Timestamp"
-
-      ReportOptions:
-        name: "ReportOptions"
-        type: "reports.ReportOptions"
-    )
-
-  ManageReportSchedule: ->
-    new ReportsRequest("ManageReportSchedule",
-      ReportType:
-        name: "ReportType"
-        required: true
-
-      Schedule:
-        name: "Schedule"
-        type: "reports.Schedules"
-        required: true
-
-      ScheduleDate:
-        name: "ScheduleDate"
-        type: "Timestamp"
-    )
-
-  GetReportScheduleList: ->
-    new ReportsRequest("GetReportScheduleList",
-      ReportTypes:
-        name: "ReportTypeList.Type"
-        list: true
-    )
-
-  GetReportScheduleListByNextToken: ->
-    new ReportsRequest("GetReportScheduleListByNextToken",
-      NextToken:
-        name: "NextToken"
-        required: true
-    )
-
-  GetReportScheduleCount: ->
-    new ReportsRequest("GetReportScheduleCount",
-      ReportTypes:
-        name: "ReportTypeList.Type"
-        list: true
-    )
-
-  UpdateReportAcknowledgements: ->
-    new ReportsRequest("UpdateReportAcknowledgements",
-      ReportIds:
-        name: "ReportIdList.Id"
-        list: true
-        required: true
-
-      Acknowledged:
-        name: "Acknowledged"
-        type: "Boolean"
-    )
+module.exports =
+  service: MWS_REPORTS
+  enums: enums
+  requests: requests
+  Client: ReportsClient
