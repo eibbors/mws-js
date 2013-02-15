@@ -225,6 +225,8 @@ class MWSResponse
     @headers = response.headers
     @body = body ? null
     @meta = {}
+    @options = options
+    @allowedContentTypes = options?.allowedContentTypes ? []
 
   # Looks for x-(ns)-(id) matches within header keys
   # and stores them in @meta[ns][id] where id is camelCase
@@ -260,6 +262,16 @@ class MWSResponse
                 # if @result.NextToken? then @nextToken = @result.NextToken
               if v.ResponseMetadata? then @meta.response = v.ResponseMetadata
           cb err, res 
+    else if @headers['content-type'] in @allowedContentTypes
+      body = new Buffer(@body)
+      md5 = crypto.createHash('md5').update(body).digest("base64")
+      if @headers['content-md5'] == md5
+        @response = @body
+        cb null, 'report'
+      else
+        console.log "Invalid MD5 on received content: amazon=#{ @headers['content-md5']} , calculated=#{ md5 }"
+        @response = null
+        cb "Invalid MD5 on received content: amazon=#{ @headers['content-md5']} , calculated=#{ md5 }", null
     else
       @response = null
       cb "Unrecognized content format: #{@headers['content-type'] ? 'undefined'}", null
