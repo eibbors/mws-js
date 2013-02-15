@@ -269,14 +269,24 @@ class MWSResponse
       md5 = crypto.createHash('md5').update(body).digest("base64")
       if @headers['content-md5'] == md5
         @response = @body
-        cb null, 'report'
+        cb null, @body
       else
-        console.log "Invalid MD5 on received content: amazon=#{ @headers['content-md5']} , calculated=#{ md5 }"
+        @responseType = 'Error'
+        @error = 
+          Type: {},
+          Code: 'Client_WrongMD5',
+          Message: "Invalid MD5 on received content: amazon=#{ @headers['content-md5']} , calculated=#{ md5 }"
         @response = null
-        cb "Invalid MD5 on received content: amazon=#{ @headers['content-md5']} , calculated=#{ md5 }", null
+        @responseWithInvalidMD5 = @body
+        cb @error, null
     else
+      @responseType = 'Error'
+      @error = 
+        Type: {},
+        Code: 'Client_UknownContent',
+        Message: "Unrecognized content format: #{@headers['content-type'] ? 'undefined'}"
       @response = null
-      cb "Unrecognized content format: #{@headers['content-type'] ? 'undefined'}", null
+      cb @error, null
 
 class MWSParam
   constructor: (@name, @required=false, value) ->
