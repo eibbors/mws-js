@@ -180,7 +180,7 @@ class MWSRequest
     @service ?= new MWSService
     for i,p of @params
       pid = p.name ? i
-      if init[pid] then p.set init[pid]
+      if init[pid]? then p.set init[pid]
       @[pid] = @params[i] ? null
 
   query: (q={}) ->
