@@ -148,13 +148,19 @@ class MWSClient extends EventEmitter
       res.on 'data', (chunk) =>
         data += chunk.toString()
       res.on 'end', =>
-        mwsres = new MWSResponse res, data
+        mwsres = new MWSResponse res, data, options
         mwsres.parseHeaders()
         mwsres.parseBody (err, parsed) =>
-          if options.nextTokenCall? and mwsres.result?.NextToken?
-            mwsres.nextToken = mwsres.result.NextToken
+          if options.nextTokenCall? and (mwsres.result?.NextToken?.length > 0)
+            invokeOpts = { nextTokenCall : options.nextTokenCall }
+            # on calls that use HasNext parameter, set nextToken only if HasNext is 'true'
+            if options.nextTokenCallUseHasNext
+              invokeOpts.nextTokenCallUseHasNext = options.nextTokenCallUseHasNext
+              mwsres.nextToken = mwsres.result.NextToken if mwsres.result?.HasNext is 'true'
+            else
+              mwsres.nextToken = mwsres.result.NextToken
             nextRequest = new options.nextTokenCall(NextToken: mwsres.nextToken)
-            mwsres.getNext = () => @invoke nextRequest, { nextTokenCall : options.nextTokenCall }, cb
+            mwsres.getNext = () => @invoke nextRequest, invokeOpts, cb
           @emit 'response', mwsres, parsed
           cb mwsres
       res.on 'error', (err) =>
