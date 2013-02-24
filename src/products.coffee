@@ -57,8 +57,19 @@ requests =
   GetMatchingProduct: class extends mws.Request
     constructor: (init) -> 
       super MWS_PRODUCTS, 'GetMatchingProduct', [
-        new mws.ParamList('MarketplaceId', 'Id', true),
+        new mws.Param('MarketplaceId', true),
         new mws.ParamList('ASINList','ASIN'),
+      ], {}, null, init
+
+  # Returns a list of products and their attributes,
+  # based on a list of ID values that you specify
+  # Id values can be : ASIN, SellerSKU, UPC, EAN, ISBN, and JAN.
+  GetMatchingProductForId: class extends mws.Request
+    constructor: (init) -> 
+      super MWS_PRODUCTS, 'GetMatchingProductForId', [
+        new mws.Param('MarketplaceId', true),
+        new mws.Param('IdType', true),
+        new mws.ParamList('IdList','Id'),
       ], {}, null, init
 
   # Returns the current competitive pricing of a product,
@@ -140,10 +151,18 @@ class ProductsClient extends mws.Client
     @invoke req, {}, (res) =>
       cb res
 
-  getMatchingProduct: (asins, marketplaceIds..., cb) ->
+  getMatchingProduct: (asins, cb) ->
     req = new requests.GetMatchingProduct
-      MarketplaceId: marketplaceIds ? @marketplaceIds ? @marketplaceId
+      MarketplaceId: @marketplaceId
       ASINList: asins ? []
+    @invoke req, {}, (res) =>
+      cb res
+
+  getMatchingProductForId: (idType, ids , cb) ->
+    req = new requests.GetMatchingProductForId
+      MarketplaceId: @marketplaceId
+      IdType: idType
+      IdList: ids
     @invoke req, {}, (res) =>
       cb res
 
