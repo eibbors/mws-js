@@ -213,7 +213,7 @@ class MWSRequest
   attach: (body, format) ->
     @body = body
     @headers['content-type'] = format ? 'text'
-    md5Calc()
+    @md5Calc()
 
   md5Calc: ->
     @headers['content-md5'] = crypto.createHash('md5').update(@body).digest("base64")
