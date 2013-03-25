@@ -47,7 +47,7 @@ requests =
   ListMatchingProducts: class extends mws.Request
     constructor: (init) -> 
       super MWS_PRODUCTS, 'ListMatchingProducts', [
-        new mws.ParamList('MarketplaceId', 'Id', true),
+        new mws.Param('MarketplaceId', 'Id', true),
         new mws.Param('Query', true),
         new mws.Param('QueryContextId', false),
       ], {}, null, init
@@ -57,8 +57,19 @@ requests =
   GetMatchingProduct: class extends mws.Request
     constructor: (init) -> 
       super MWS_PRODUCTS, 'GetMatchingProduct', [
-        new mws.ParamList('MarketplaceId', 'Id', true),
+        new mws.Param('MarketplaceId', true),
         new mws.ParamList('ASINList','ASIN'),
+      ], {}, null, init
+
+  # Returns a list of products and their attributes,
+  # based on a list of ID values that you specify
+  # Id values can be : ASIN, SellerSKU, UPC, EAN, ISBN, and JAN.
+  GetMatchingProductForId: class extends mws.Request
+    constructor: (init) -> 
+      super MWS_PRODUCTS, 'GetMatchingProductForId', [
+        new mws.Param('MarketplaceId', true),
+        new mws.Param('IdType', true),
+        new mws.ParamList('IdList','Id'),
       ], {}, null, init
 
   # Returns the current competitive pricing of a product,
@@ -66,7 +77,7 @@ requests =
   GetCompetitivePricingForSKU: class extends mws.Request
     constructor: (init) -> 
       super MWS_PRODUCTS, 'GetCompetitivePricingForSKU', [
-        new mws.ParamList('MarketplaceId', 'Id', true),
+        new mws.Param('MarketplaceId', 'Id', true),
         new mws.ParamList('SellerSKUList', 'SellerSKU', true),
       ], {}, null, init
 
@@ -75,7 +86,7 @@ requests =
   GetCompetitivePricingForASIN: class extends mws.Request
     constructor: (init) -> 
       super MWS_PRODUCTS, 'GetCompetitivePricingForASIN', [
-        new mws.ParamList('MarketplaceId', 'Id', true),
+        new mws.Param('MarketplaceId', 'Id', true),
         new mws.ParamList('ASINList','ASIN'),
       ], {}, null, init
 
@@ -83,7 +94,7 @@ requests =
   GetLowestOfferListingsForSKU: class extends mws.Request
     constructor: (init) -> 
       super MWS_PRODUCTS, 'GetLowestOfferListingsForSKU', [
-        new mws.ParamList('MarketplaceId', 'Id', true),
+        new mws.Param('MarketplaceId', 'Id', true),
         new mws.ParamList('SellerSKUList', 'SellerSKU', true),
         new enums.ItemCondition('ItemCondition'),
       ], {}, null, init
@@ -92,7 +103,7 @@ requests =
   GetLowestOfferListingsForASIN: class extends mws.Request
     constructor: (init) -> 
       super MWS_PRODUCTS, 'GetLowestOfferListingsForASIN', [
-        new mws.ParamList('MarketplaceId', 'Id', true),
+        new mws.Param('MarketplaceId', 'Id', true),
         new enums.ItemCondition('ItemCondition'),
         new mws.ParamList('ASINList','ASIN'),
       ], {}, null, init
@@ -102,7 +113,7 @@ requests =
   GetProductCategoriesForSKU: class extends mws.Request
     constructor: (init) -> 
       super MWS_PRODUCTS, 'GetProductCategoriesForSKU', [
-        new mws.ParamList('MarketplaceId', 'Id', true),
+        new mws.Param('MarketplaceId', 'Id', true),
         new mws.Param('SellerSKU', true),
       ], {}, null, init
 
@@ -111,7 +122,7 @@ requests =
   GetProductCategoriesForASIN: class extends mws.Request
     constructor: (init) -> 
       super MWS_PRODUCTS, 'GetProductCategoriesForASIN', [
-        new mws.ParamList('MarketplaceId', 'Id', true),
+        new mws.Param('MarketplaceId', 'Id', true),
         new mws.Param('ASIN', true),
       ], {}, null, init
 
@@ -123,70 +134,75 @@ requests =
 class ProductsClient extends mws.Client
   constructor: ->
     super
-    @marketplaceIds = if @marketplaceId then [@marketplaceId] else []
-
-  setMarketplaces: (@marketplaceIds...) ->
 
   getServiceStatus: (cb) ->
     @invoke new requests.GetServiceStatus(), {}, (res) =>
       status = res.result?.Status ? null
       cb status, res
 
-  listMatchingProducts: (query, context, marketplaceIds..., cb) ->
+  listMatchingProducts: (query, context, cb) ->
     req = new requests.ListMatchingProducts
-      MarketplaceId: marketplaceIds ? @marketplaceIds ? @marketplaceId
+      MarketplaceId: @marketplaceId
       Query: query
       QueryContextId: context ? undefined
     @invoke req, {}, (res) =>
       cb res
 
-  getMatchingProduct: (asins, marketplaceIds..., cb) ->
+  getMatchingProduct: (asins, cb) ->
     req = new requests.GetMatchingProduct
-      MarketplaceId: marketplaceIds ? @marketplaceIds ? @marketplaceId
+      MarketplaceId: @marketplaceId
       ASINList: asins ? []
     @invoke req, {}, (res) =>
       cb res
 
-  getCompetitivePricingForSKU: (skus, marketplaceIds..., cb) ->
+  getMatchingProductForId: (idType, ids , cb) ->
+    req = new requests.GetMatchingProductForId
+      MarketplaceId: @marketplaceId
+      IdType: idType
+      IdList: ids
+    @invoke req, {}, (res) =>
+      cb res
+
+  getCompetitivePricingForSKU: (skus, cb) ->
     req = new requests.GetCompetitivePricingForSKU
-      MarketplaceId: marketplaceIds ? @marketplaceIds ? @marketplaceId
+      MarketplaceId: @marketplaceId
       SellerSKUList: skus ? []
     @invoke req, {}, (res) =>
       cb res
 
-  getCompetitivePricingForASIN: (asins, marketplaceIds..., cb) ->
+  getCompetitivePricingForASIN: (asins, cb) ->
     req = new requests.GetCompetitivePricingForASIN
-      MarketplaceId: marketplaceIds ? @marketplaceIds ? @marketplaceId
+      MarketplaceId: @marketplaceId
       ASINList: asins ? []
     @invoke req, {}, (res) =>
       cb res
 
-  getLowestOfferListingsForSKU: (skus, condition, marketplaceIds..., cb) ->
+  getLowestOfferListingsForSKU: (skus, condition, cb) ->
     req = new requests.GetLowestOfferListingsForSKU
-      MarketplaceId: marketplaceIds ? @marketplaceIds ? @marketplaceId
+      MarketplaceId:  @marketplaceId
       SellerSKUList: skus ? []
       ItemCondition: condition ? undefined
     @invoke req, {}, (res) =>
       cb res
 
-  getLowestOfferListingsForASIN: (asins, condition, marketplaceIds..., cb) ->
+  getLowestOfferListingsForASIN: (asins, condition, cb) ->
     req = new requests.GetLowestOfferListingsForASIN
-      MarketplaceId: marketplaceIds ? @marketplaceIds ? @marketplaceId
+      MarketplaceId: @marketplaceId
       ASINList: asins ? []
       ItemCondition: condition ? undefined
     @invoke req, {}, (res) =>
       cb res
   
-  getProductCategoriesForSKU: (sku, marketplaceIds..., cb) ->
+  getProductCategoriesForSKU: (sku, cb) ->
     req = new requests.GetProductCategoriesForSKU
-      MarketplaceId: marketplaceIds ? @marketplaceIds ? @marketplaceId
+      MarketplaceId: @marketplaceId
       SellerSKU: sku
     @invoke req, {}, (res) =>
       cb res
 
-  getProductCategoriesForASIN: (asin, marketplaceIds..., cb) ->
+  getProductCategoriesForASIN: (asin, cb) ->
     req = new requests.GetProductCategoriesForASIN
-      MarketplaceId: marketplaceIds ? @marketplaceIds ? @marketplaceId
+      MarketplaceId: @marketplaceId
       ASIN: asin
     @invoke req, {}, (res) =>
       cb res

@@ -68,19 +68,19 @@ class MWSClient extends EventEmitter
     if options.locale?
       unless typeof options.locale is 'object'
         options.locale = MWS_LOCALES[options.locale] ? null
-      @host = options.host ? options.locale.host ? "mws.amazonservices.com"
+      @host = options.host ? (options.locale.host ? "mws.amazonservices.com")
       @marketplaceId = options.locale.marketplaceId
       @country = options.locale.country ? undefined
       @domain = options.locale.domain ? undefined
     # Connection settings
-    @host = options.host ? "mws.amazonservices.com"
+    @host = @host ? (options.host ? "mws.amazonservices.com")
     @port = options.port ? 443
     # Credentials required by every request
     @merchantId = options.merchantId ? null
     @accessKeyId = options.accessKeyId ? null
     @secretAccessKey = options.secretAccessKey ? null
     # MarketplaceId required by many requests
-    @marketplaceId ?= options.marketplaceId ? null
+    @marketplaceId ?= @marketplaceId ? (options.marketplaceId ? null)
     # Application information
     @appName = options.appName or 'mws-js'
     @appVersion = options.appVersion or "0.2.0"
@@ -144,22 +144,33 @@ class MWSClient extends EventEmitter
     # Instantiate an http(s) request
     req = https.request options, (res) =>
       # Join chunked data until EOF reached, then parse or pass error
-      data = ''
+      data = []
       res.on 'data', (chunk) =>
-        data += chunk.toString()
+        data.push( chunk )
       res.on 'end', =>
-        mwsres = new MWSResponse res, data
+        data = Buffer.concat(data)
+        mwsres = new MWSResponse res, data, options
         mwsres.parseHeaders()
         mwsres.parseBody (err, parsed) =>
-          if options.nextTokenCall? and mwsres.result?.NextToken?
-            mwsres.nextToken = mwsres.result.NextToken
+          if options.nextTokenCall? and (mwsres.result?.NextToken?.length > 0)
+            invokeOpts = { nextTokenCall : options.nextTokenCall }
+            # on calls that use HasNext parameter, set nextToken only if HasNext is 'true'
+            if options.nextTokenCallUseHasNext
+              invokeOpts.nextTokenCallUseHasNext = options.nextTokenCallUseHasNext
+              mwsres.nextToken = mwsres.result.NextToken if mwsres.result?.HasNext is 'true'
+            else
+              mwsres.nextToken = mwsres.result.NextToken
             nextRequest = new options.nextTokenCall(NextToken: mwsres.nextToken)
-            mwsres.getNext = (callback) => @invoke nextRequest, {}, callback
+            mwsres.getNext = ()=>
+              opts = {}
+              for k,v of invokeOpts
+                opts[k] = v
+              @invoke nextRequest, opts, cb
           @emit 'response', mwsres, parsed
           cb mwsres
       res.on 'error', (err) =>
         @emit 'error', err
-        cb err, null, data
+        cb err, null, Buffer.concat(data).toString()
     @emit 'request', req, options
     req.write options.body
     req.end()
@@ -180,7 +191,7 @@ class MWSRequest
     @service ?= new MWSService
     for i,p of @params
       pid = p.name ? i
-      if init[pid] then p.set init[pid]
+      if init[pid]? then p.set init[pid]
       @[pid] = @params[i] ? null
 
   query: (q={}) ->
@@ -206,7 +217,7 @@ class MWSRequest
   attach: (body, format) ->
     @body = body
     @headers['content-type'] = format ? 'text'
-    md5Calc()
+    @md5Calc()
 
   md5Calc: ->
     @headers['content-md5'] = crypto.createHash('md5').update(@body).digest("base64")
@@ -219,6 +230,8 @@ class MWSResponse
     @headers = response.headers
     @body = body ? null
     @meta = {}
+    @options = options
+    @allowedContentTypes = options?.allowedContentTypes ? []
 
   # Looks for x-(ns)-(id) matches within header keys
   # and stores them in @meta[ns][id] where id is camelCase
@@ -235,11 +248,18 @@ class MWSResponse
 
   # Handle xml2js conversion as well as any report formats later on
   parseBody: (cb) ->
+    isXml = false
     if @headers['content-type'] is 'text/xml'
+      @body = @body.toString()
+      isXml = true
+    if @headers['content-type'] is 'text/plain'
+      @body = @body.toString()
+      isXml = @body.indexOf('<?xml') == 0
+    if isXml
       parser = new xml2js.Parser { explicitRoot: true, normalize: false, trim: false }
       parser.parseString @body, (err, res) =>
         if err then throw err
-        else  
+        else
           @response = res ? {}
           # This simply checks the root elements for "#{x}Response" and sets responseType
           for k, v of @response
@@ -254,9 +274,28 @@ class MWSResponse
                 # if @result.NextToken? then @nextToken = @result.NextToken
               if v.ResponseMetadata? then @meta.response = v.ResponseMetadata
           cb err, res 
+    else if @headers['content-type'] in @allowedContentTypes
+      md5 = crypto.createHash('md5').update(@body).digest("base64")
+      if @headers['content-md5'] == md5
+        @response = @body
+        cb null, @body
+      else
+        @responseType = 'Error'
+        @error = 
+          Type: {},
+          Code: 'Client_WrongMD5',
+          Message: "Invalid MD5 on received content: amazon=#{ @headers['content-md5']} , calculated=#{ md5 }"
+        @response = null
+        @responseWithInvalidMD5 = @body
+        cb @error, null
     else
+      @responseType = 'Error'
+      @error = 
+        Type: {},
+        Code: 'Client_UknownContent',
+        Message: "Unrecognized content format: #{@headers['content-type'] ? 'undefined'}"
       @response = null
-      cb "Unrecognized content format: #{@headers['content-type'] ? 'undefined'}", null
+      cb @error, null
 
 class MWSParam
   constructor: (@name, @required=false, value) ->
@@ -339,7 +378,6 @@ class MWSParamList extends MWSParam
 
 class MWSEnum extends MWSParam 
   constructor: (@name, @members=[], @required=false, value) ->
-    @members = []
     @value = null
     if value? then @set value 
 
