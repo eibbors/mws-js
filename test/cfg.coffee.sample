@@ -1,0 +1,9 @@
+module.exports =
+	loginInfo:
+		locale: 'DE'
+		merchantId: 'XXXXXXX'
+		marketplaceId: 'XXXXXXX'
+		accessKeyId: 'XXXXXXX'
+		secretAccessKey: 'XXXXX'
+	dump: console.dir
+	print: console.log
