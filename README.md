@@ -1,6 +1,16 @@
 mws-js
 ======
 
+This is a continuation of the continuation of this code.  I have made changes to the
+explicit .js files, as I do not use coffee script.  I have fixed some of the bugs with
+the feed upload, core file, and FBA API requests.  Note: I have not made any changes to
+the .coffee files in this library.
+
+This is a continuation of the unstable branch of https://github.com/eibbors/mws-js .
+While having very nice ideas, it was incomplete and a bit buggy.
+I needed only the products, orders and feeds APIs, so I have no idea what is the status
+of the rest of the apis
+
 I find Node.js an absolute pleasure to work with and made this rough
 Marketplace web services client as one of my first projects. I still find it
 beats the snot out of PHP, Java, or C# packages Amazon publishes.  
@@ -12,25 +22,38 @@ should work fine and dandy like cotton candy.
 Usage
 =====
 
-Super simple example
---------------------
-
-I will be creating some sample projects illustrating how to take advantage
-of complex/enum params and other more useful features of this library, but
-the most basic usage I could come up with goes something like:
-
+.js Example
+-------------
+Fetching a product info:
 ```javascript
-var mws = require('mws'),
-    client = new AmazonMwsClient('accessKeyId', 'secretAccessKey', 'merchantId', {});
+var mws = require('./mws-js');
+client = new mws.products.Client(loginCredentials);
 
-// Get the service status of Sellers API endpoint and print it
-client.invoke(new mws.sellers.requests.GetServiceStatus(), console.log);
-
-var listOrders = new mws.orders.requests.ListOrders();
-listOrders.set('MarketplaceId', 'marketplaceId')
-          .set('CreatedAfter', new Date(2,14,2012));
-client.invoke(listOrders, function(result) {
-  console.log(result);
-  // Do something fun with the results...
+client.getMatchingProductForId('ASIN', B005ISQ7JC, function(res){
+  if (res.error) {
+    console.error(res.error);
+  } else if (res.result) {
+    console.log(res.result);
+  }
 });
+
 ```
+
+
+Coffee Script example
+--------------
+Fetching a product info:
+```
+mws = require equire 'mws-js'
+client = new mws.products.Client(loginInfo)
+
+client.getMatchingProductForId 'ASIN', ASIN_ID , (res) =>
+	if res.error
+		console.error res.error
+	else if res.result
+		console.log util.inspect(res.result,false,10)
+
+```
+
+
+You can have a look at test directory for more examples.
