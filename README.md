@@ -29,7 +29,7 @@ Fetching a product info:
 var mws = require('./mws-js');
 client = new mws.products.Client(loginCredentials);
 
-client.getMatchingProductForId('ASIN', B005ISQ7JC, function(res){
+client.getMatchingProductForId('ASIN', 'B005ISQ7JC', function(res){
   if (res.error) {
     console.error(res.error);
   } else if (res.result) {
