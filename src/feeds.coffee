@@ -85,7 +85,7 @@ enums = exports.enums =
 
   FeedProcessingStatusList: class extends mws.EnumList
     constructor: (required, init) ->
-      super('FeedProcessingStatusList', 'Status', [ 'FillOrKill', 'FillAll', 'FillAllAvailable' ], options.required ? false)
+      super('FeedProcessingStatusList', 'Status', [ 'FillOrKill', 'FillAll', 'FillAllAvailable' ], required ? false)
 
 # requests ns
 requests =
