@@ -77,7 +77,7 @@ types =
 enums = exports.enums =
   FeedProcessingStatus: class extends mws.Enum
     constructor: (required, init) ->
-      super 'FeedProcessingStatus', ["_SUBMITTED_", "_IN_PROGRESS_", "_CANCELLED_", "_DONE_"]
+      super 'FeedProcessingStatus', (k for k,v of types.FeedProcessingStatus)
 
   FeedTypeList: class extends mws.EnumList
     constructor: (required, init) ->
@@ -85,14 +85,14 @@ enums = exports.enums =
 
   FeedProcessingStatusList: class extends mws.EnumList
     constructor: (required, init) ->
-      super('FeedProcessingStatusList', 'Status', [ 'FillOrKill', 'FillAll', 'FillAllAvailable' ], required ? false)
+      super 'FeedProcessingStatusList', 'Status', (k for k,v of types.FeedProcessingStatus), required, init
 
 # requests ns
 requests =
 
   GetServiceStatus: class extends mws.Request
     constructor: (init) ->
-      super MWS_ORDERS, 'GetServiceStatus', [], {}, null, init
+      super MWS_FEEDS, 'GetServiceStatus', [], {}, null, init
 
   CancelFeedSubmissions: class extends mws.Request
     constructor: (init) -> 
@@ -215,13 +215,13 @@ class FeedsClient extends mws.Client
 
   # Upload feed data for submission
   submitFeed: (feedType, feedBody, marketplaces, purgeReplace=false, cb) =>
-    req = new requests.GetFeedSubmissionResult
+    req = new requests.SubmitFeed
       FeedType: feedType
       MarketplaceIdList: marketplaces ? @marketplaceIds ? [@marketplaceId]
       PurgeAndReplace: purgeReplace
     , feedBody
 
-    @invoke req, {}, (res) =>
+    @invoke req, {method:'POST', headers:{'Content-Type':'text/xml'}}, (res) =>
       # TODO: test and parse
       if typeof cb is 'function' then cb res
 
