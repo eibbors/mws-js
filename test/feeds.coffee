@@ -12,18 +12,20 @@ client.getServiceStatus (status, res) =>
 	unless status in ['GREEN', 'GREEN_I']
 		throw 'Feeds service is having issues, aborting...'
 
-	# client.getFeedSubmissionCount ['_POST_PRODUCT_DATA_'], '_IN_PROGRESS_', '2013-08-01', '2013-08-31', (res) =>
-	# 	if res.error
-	# 		console.error res.error
-	# 	else if res.result
-	# 		console.log util.inspect(res.result,false,10)
-
 	client.getFeedSubmissionList {
-		'MaxCount': 30
-		'FeedTypeList': [{'_POST_PRODUCT_DATA_': true}]
+		'MaxCount': 3
+		'FeedProcessingStatusList': [{'_DONE_': true}]
+		'SubmittedFromDate': '2013-01-01'
+		'SubmittedToDate': '2013-12-31'
+		# 'FeedTypeList': [{'_POST_PRODUCT_PRICING_DATA_': true}]
 	}, (res) =>
 		if res.error
 			console.error res.error
 		else if res.result
 			console.log util.inspect(res.result,false,10)
-		
+			for i,info of res.result.FeedSubmissionInfo ? []
+				client.getFeedSubmissionResult info.FeedSubmissionId, (res) =>
+					if res.error
+						console.error res.error
+					else if res.result
+						console.log util.inspect(res.result,false,10)

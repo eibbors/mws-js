@@ -166,7 +166,7 @@ class FeedsClient extends mws.Client
   getServiceStatus: (cb) ->
     @invoke new requests.GetServiceStatus(), {}, (res) =>
       status = res.result?.Status ? null
-      cb status, res
+      if typeof cb is 'function' then cb status, res
   
   # Cancel one or more previous submissions
   cancelFeedSubmissions: (submissionIds, feedTypes, submittedFrom, submittedTo, cb) ->

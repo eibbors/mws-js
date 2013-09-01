@@ -249,10 +249,10 @@ class MWSResponse
   # Handle xml2js conversion as well as any report formats later on
   parseBody: (cb) ->
     isXml = false
-    if @headers['content-type'] is 'text/xml'
+    if @headers['content-type'].indexOf('text/xml') == 0
       @body = @body.toString()
       isXml = true
-    if @headers['content-type'] is 'text/plain'
+    if @headers['content-type'].indexOf('text/plain') == 0
       @body = @body.toString()
       isXml = @body.indexOf('<?xml') == 0
     if isXml
@@ -437,8 +437,9 @@ class MWSEnumList extends MWSParamList
   get: ->
     list = {}
     count = 0
-    for k, v of @value when v is true
-      list["#{@name}.#{@type}.#{++count}"] = k
+    for i of @value
+      for k, v of @value[i] when v is true
+        list["#{@name}.#{@type}.#{++count}"] = k
     list
 
 class MWSComplexParam extends MWSParam
