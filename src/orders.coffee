@@ -21,7 +21,7 @@ enums =
   # Order statuses with a little extra verification to help avoid errors
   OrderStatus: class extends mws.EnumList
     constructor: ->
-      super('OrderStatus', 'Status', ["Pending", "Unshipped", "PartiallyShipped", "Shipped", "Canceled", "Unfulfillable"])
+      super('OrderStatus', 'Status', (k for k,v of types.OrderStatus))
     
     render: (obj={}) ->
       if @value.Unshipped isnt @value.PartiallyShipped
@@ -30,11 +30,11 @@ enums =
         
   FulfillmentChannel: class extends mws.EnumList
     constructor: ->
-      super('FulfillmentChannel', 'Channel', ['AFN', 'MFN'])
+      super('FulfillmentChannel', 'Channel', (k for k,v of types.FulfillmentChannel))
     
   PaymentMethod: class extends mws.EnumList
     constructor: ->
-      super('PaymentMethod', 'Method', ['COD', 'CVS', 'Other'])
+      super('PaymentMethod', 'Method', (k for k,v of types.PaymentMethod))
 
 # Simple type definitions -- mostly helpful for providing hints through gui
 types =
