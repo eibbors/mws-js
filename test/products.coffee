@@ -1,3 +1,4 @@
+util = require 'util'
 products = require '../src/products'
 { loginInfo, dump, print } = require './cfg'
 
