@@ -14,18 +14,19 @@ client.getServiceStatus (status, res) =>
 
 	client.getFeedSubmissionList {
 		'MaxCount': 3
-		'FeedProcessingStatusList': [{'_DONE_': true}]
+		'FeedProcessingStatusList': {'_DONE_': true}
 		'SubmittedFromDate': '2013-01-01'
 		'SubmittedToDate': '2013-12-31'
-		# 'FeedTypeList': [{'_POST_PRODUCT_PRICING_DATA_': true}]
+		# 'FeedTypeList': {'_POST_PRODUCT_PRICING_DATA_': true}
 	}, (res) =>
 		if res.error
 			console.error res.error
 		else if res.result
 			console.log util.inspect(res.result,false,10)
-			for i,info of res.result.FeedSubmissionInfo ? []
+			res.result.FeedSubmissionInfo = [res.result.FeedSubmissionInfo] unless Array.isArray res.result.FeedSubmissionInfo
+			for i,info of res.result.FeedSubmissionInfo when info
 				client.getFeedSubmissionResult info.FeedSubmissionId, (res) =>
 					if res.error
 						console.error res.error
-					else if res.result
-						console.log util.inspect(res.result,false,10)
+					else if res.response
+						console.log util.inspect(res.response,false,10)

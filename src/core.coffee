@@ -252,9 +252,13 @@ class MWSResponse
     if @headers['content-type'].indexOf('text/xml') == 0
       @body = @body.toString()
       isXml = true
-    if @headers['content-type'].indexOf('text/plain') == 0
-      @body = @body.toString()
+    else if @headers['content-type'].indexOf('text/plain') == 0
+      @body = @body.toString().trim()
       isXml = @body.indexOf('<?xml') == 0
+    else if @headers['content-type'].indexOf('application/octet-stream') == 0
+      @body = @body.toString().trim()
+      isXml = @body.indexOf('<?xml') == 0
+
     if isXml
       parser = new xml2js.Parser { explicitRoot: true, normalize: false, trim: false }
       parser.parseString @body, (err, res) =>
