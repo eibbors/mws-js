@@ -6,13 +6,18 @@ Complete Amazon marketplace web services client for Node.js.  This project is st
 Usage
 =====
 
+config
+------
+```javascript
 loginInfo = {
-	locale: 'US',
-	merchantId: 'XXXXXXX',
-	marketplaceId: 'XXXXXXX',
-	accessKeyId: 'XXXXXXX',
-	secretAccessKey: 'XXXXX'
+  locale: 'US',
+  merchantId: 'XXXXXXX',
+  marketplaceId: 'XXXXXXX',
+  accessKeyId: 'XXXXXXX',
+  secretAccessKey: 'XXXXX'
 }
+
+```
 
 .js Example
 -------------
