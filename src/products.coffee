@@ -107,7 +107,23 @@ requests =
         new enums.ItemCondition('ItemCondition'),
         new mws.ParamList('ASINList','ASIN'),
       ], {}, null, init
-  
+
+  GetMyPriceForSKU: class extends mws.Request
+    constructor: (init) ->
+      super MWS_PRODUCTS, 'GetMyPriceForSKU', [
+        new mws.Param('MarketplaceId', 'Id', true),
+        new mws.ParamList('SellerSKUList', 'SellerSKU', true),
+        new enums.ItemCondition('ItemCondition')
+      ], {}, null, init
+
+  GetMyPriceForASIN: class extends mws.Request
+    constructor: (init) ->
+      super MWS_PRODUCTS, 'GetMyPriceForASIN', [
+        new mws.Param('MarketplaceId', 'Id', true),
+        new enums.ItemCondition('ItemCondition'),
+        new mws.ParamList('ASINList', 'ASIN')
+      ], {}, null, init
+
   # Returns the product categories that a product belongs to,
   # including parent categories back to the root for the marketplace
   GetProductCategoriesForSKU: class extends mws.Request
@@ -192,7 +208,23 @@ class ProductsClient extends mws.Client
       ItemCondition: condition ? undefined
     @invoke req, {}, (res) =>
       cb res
-  
+
+  getMyPriceForSKU: (skus, condition, cb) ->
+    req = new requests.GetMyPriceForSKU
+      MarketplaceId: this.marketplaceId
+      SellerSKUList: skus ? []
+      ItemCondition: condition ? undefined
+    @invoke req, {}, (res) =>
+      cb res
+
+  getMyPriceForASIN: (asins, condition, cb) ->
+    req = new requests.GetMyPriceForASIN
+      MarketplaceId: this.marketplaceId
+      ASINList: asins ? []
+      ItemCondition: condition ? undefined
+    @invoke req, {}, (res) =>
+      cb res
+
   getProductCategoriesForSKU: (sku, cb) ->
     req = new requests.GetProductCategoriesForSKU
       MarketplaceId: @marketplaceId
