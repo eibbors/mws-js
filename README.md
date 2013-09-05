@@ -1,36 +1,54 @@
 mws-js
 ======
 
-I find Node.js an absolute pleasure to work with and made this rough
-Marketplace web services client as one of my first projects. I still find it
-beats the snot out of PHP, Java, or C# packages Amazon publishes.  
-I use it for real-time integration and/or dashboards for e-commerce clients.
-Note: there may be tons of bugs since I updated the formatting to be a lot
-more user-friendly, but almost all of the documented functions and objects
-should work fine and dandy like cotton candy.
+Complete Amazon marketplace web services client for Node.js.  This project is still a work in progress, not all interfaces are fully tested and working.
 
 Usage
 =====
 
-Super simple example
---------------------
-
-I will be creating some sample projects illustrating how to take advantage
-of complex/enum params and other more useful features of this library, but
-the most basic usage I could come up with goes something like:
-
+config
+------
 ```javascript
-var mws = require('mws'),
-    client = new AmazonMwsClient('accessKeyId', 'secretAccessKey', 'merchantId', {});
+loginInfo = {
+  locale: 'US',
+  merchantId: 'XXXXXXX',
+  marketplaceId: 'XXXXXXX',
+  accessKeyId: 'XXXXXXX',
+  secretAccessKey: 'XXXXX'
+}
 
-// Get the service status of Sellers API endpoint and print it
-client.invoke(new mws.sellers.requests.GetServiceStatus(), console.log);
-
-var listOrders = new mws.orders.requests.ListOrders();
-listOrders.set('MarketplaceId', 'marketplaceId')
-          .set('CreatedAfter', new Date(2,14,2012));
-client.invoke(listOrders, function(result) {
-  console.log(result);
-  // Do something fun with the results...
-});
 ```
+
+.js Example
+-------------
+Fetching a product info:
+```javascript
+var mws = require('mws-js');
+var client = new mws.products.Client(loginInfo);
+
+client.getMatchingProductForId('ASIN', 'B005ISQ7JC', function(res){
+  if (res.error) {
+    console.error(res.error);
+  } else if (res.result) {
+    console.log(res.result);
+  }
+});
+
+```
+
+Coffee Script example
+--------------
+Fetching a product info:
+```
+mws = require equire 'mws-js'
+client = new mws.products.Client(loginInfo)
+
+client.getMatchingProductForId 'ASIN', ASIN_ID , (res) =>
+	if res.error
+		console.error res.error
+	else if res.result
+		console.log util.inspect(res.result,false,10)
+
+```
+
+You can have a look at test directory for more examples.
