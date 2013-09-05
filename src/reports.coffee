@@ -129,6 +129,11 @@ reportTypes =
     group: 'Performance'
     format: 'flat'
     request: true
+  '_GET_AFN_INVENTORY_DATA_':
+    title: 'FBA Inventory Report'
+    group: 'Fulfillment'
+    format: 'flat'
+    request: true
 
 ###
 Ojects to represent enum collections used by some request(s)

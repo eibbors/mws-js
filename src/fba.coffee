@@ -311,21 +311,48 @@ class FBAInboundClient extends mws.Client
       status = res.result?.Status ? null
       cb status, res
 
+  listInboundShipments: (options, cb) ->
+    if options.ShipmentStatusList and options.ShipmentIdList
+      req = new requests.inbound.ListInboundShipments options
+
+      @invoke req, { nextTokenCall: requests.ListInboundShipmentsByNextToken }, (res) ->
+        shipments = res.result?.ShipmentData ? null
+        if typeof cb is 'function' then cb shipments, res  
+    else
+      throw 'Special Case: requires either ShipmentStatusList list or ShipmentIdList list be used!'
+
+  listInboundShipmentItems: (options, cb) ->
+    if options.ShipmentId or (options.LastUpdatedAfter and options.LastUpdatedBefore)
+      req = new requests.inbound.ListInboundShipmentItems options;
+      @invoke req, { nextTokenCall: requests.ListInboundShipmentItemsByNextToken }, (res) ->
+        items = res.result?.ItemData ? null
+        if typeof cb is 'function' then cb items, res
+    else
+      throw 'Special Case: requires either ShipmentId number or LastUpdatedAfter and LastUpdatedBefore timestamps be used!';
+
 class FBAOutboundClient extends mws.Client
 
     getServiceStatus: (cb) ->
       @invoke new requests.outbound.GetServiceStatus(), {}, (res) =>
         status = res.result?.Status ? null
-        cb status, res
+        if typeof cb is 'function' then cb status, res
 
 class FBAInventoryClient extends mws.Client
  
     getServiceStatus: (cb) ->
       @invoke new requests.inventory.GetServiceStatus(), {}, (res) =>
         status = res.result?.Status ? null
-        cb status, res
+        if typeof cb is 'function' then cb status, res
 
+    listInventorySupply: (options, cb) ->
+      if (options.SellerSkus and not options.QueryStartDateTime or options.QueryStartDateTime)
+        req = new requests.inventory.ListInventorySupply options
 
+        @invoke req, { nextTokenCall: requests.ListInventorySupplyByNextToken }, (res) ->
+          inventory = res.result?.InventorySupplyList ? null
+          if typeof cb is 'function' then cb inventory, res
+      else
+        throw 'Special Case: requires EXCLUSIVELY either SellerSkus list or QueryStartDateTime timestamp be used!'
 
 module.exports = 
   inbound:

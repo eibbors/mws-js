@@ -10,7 +10,7 @@ core = require '../src/core'
 #   comment: new core.Param('DisplayableOrderComment', false) 
 
 # cx = new core.ComplexParam('DisplayableOrder',p, true)
-dor = new fba.complex.DisplayableOrder( undefined, true, { id: true, isplayableorderid: '15555afafaf5555', comment: 'nigger poop' })
+dor = new fba.complex.DisplayableOrder( undefined, true, { id: '15555afafaf5555', comment: 'test comment' })
 dump dor.get('ASD')
 dump dor.render()
 # address = fba.complex
