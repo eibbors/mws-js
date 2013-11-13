@@ -21,7 +21,7 @@ the most basic usage I could come up with goes something like:
 
 ```javascript
 var mws = require('mws'),
-    client = new AmazonMwsClient('accessKeyId', 'secretAccessKey', 'merchantId', {});
+    client = new mws.Client('accessKeyId', 'secretAccessKey', 'merchantId', {});
 
 // Get the service status of Sellers API endpoint and print it
 client.invoke(new mws.sellers.requests.GetServiceStatus(), console.log);
