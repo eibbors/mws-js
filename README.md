@@ -28,7 +28,7 @@ client.invoke(new mws.sellers.requests.GetServiceStatus(), console.log);
 
 var listOrders = new mws.orders.requests.ListOrders();
 listOrders.set('MarketplaceId', 'marketplaceId')
-          .set('CreatedAfter', new Date(2,14,2012));
+          .set('CreatedAfter', new Date(2012,2,14));
 client.invoke(listOrders, function(result) {
   console.log(result);
   // Do something fun with the results...
